@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -18,7 +17,10 @@ type worker struct {
 func (w worker) initAndDispatch() {
 	log.Println("Client Connected")
 	id := w.game.addPlayer()
-	err := w.ws.WriteMessage(1, []byte(`{ "id":`+strconv.Itoa(id)+`}`))
+	message := createNewPlayerIDMessage(id)
+	bytes, _ := json.Marshal(message)
+
+	err := w.ws.WriteMessage(1, bytes)
 	if err != nil {
 		log.Println(err)
 	}
@@ -45,12 +47,9 @@ func (w worker) writer(ticker *time.Ticker) {
 	for {
 		t := <-ticker.C
 
-		bytes, err := json.Marshal(w.game.players)
-		if err != nil {
-			log.Println("Error marshalling players", err)
-			continue
-		}
-		err = w.ws.WriteMessage(1, bytes)
+		message := createPlayersPositionMessage(w.game.players)
+		bytes, _ := json.Marshal(message)
+		err := w.ws.WriteMessage(1, bytes)
 
 		if err != nil {
 			log.Println("Returning from writer", err)

@@ -5,19 +5,24 @@ let socket = new WebSocket('ws://127.0.0.1:8080/ws');
 console.log('Attempting Connection...');
 
 var players = []
+var playerId = 1;
 
-socket.onmessage = (message) => {
-  players = JSON.parse(message.data)
-  console.log(parsedMessage);
+socket.onmessage = (messageEvent) => {
+  message = JSON.parse(messageEvent.data)
+  if(message.type == "newPlayerId") {
+    playerId = message.id
+  } else if (message.type == "playersPosition") {
+    players = message.players
+  }
 };
 
-var id = 1;
+
 document.addEventListener('keydown', keyDownHandler, false);
 function keyDownHandler(e) {
   if (e.key == 'ArrowRight') {
-    socket.send(JSON.stringify({id:id, key:"Right"}))
+    socket.send(JSON.stringify({id:playerId, key:"Right"}))
   } else if (e.key == 'ArrowLeft') {
-    socket.send(JSON.stringify({id:id, key:"Left"}))
+    socket.send(JSON.stringify({id:playerId, key:"Left"}))
   }
 }
 
