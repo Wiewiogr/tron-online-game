@@ -5,9 +5,10 @@ import (
 	"net/http"
 )
 
-var mainGame = game{}
+var mainGame = NewGame()
 
 func main() {
 	setupRoutes()
+	mainGame.start()
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

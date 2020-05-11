@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -12,12 +11,16 @@ import (
 type worker struct {
 	game *game
 	ws   *websocket.Conn
+	id   int
 }
 
-func (w worker) initAndDispatch() {
+func (w *worker) initAndDispatch() {
 	log.Println("Client Connected")
-	id := w.game.addPlayer()
-	message := createNewPlayerIDMessage(id)
+	updatesChannel := make(chan map[int]playerPosition)
+	inputChannel := make(chan input)
+	w.id = w.game.registerNewPlayer(updatesChannel, inputChannel)
+
+	message := createNewPlayerIDMessage(w.id)
 	bytes, _ := json.Marshal(message)
 
 	err := w.ws.WriteMessage(1, bytes)
@@ -25,36 +28,35 @@ func (w worker) initAndDispatch() {
 		log.Println(err)
 	}
 
-	ticker := time.NewTicker(100 * time.Millisecond)
-
-	go w.writer(ticker)
-	go w.reader()
+	go w.writer(updatesChannel)
+	go w.reader(inputChannel)
 }
 
-func (w worker) reader() {
+func (w worker) writer(updatesChannel chan map[int]playerPosition) {
 	for {
-		_, p, err := w.ws.ReadMessage()
+		newBoard := <-updatesChannel
 
-		if err != nil {
-			log.Println("Returning from reader", err)
-			return
-		}
-		fmt.Println(string(p))
-	}
-}
-
-func (w worker) writer(ticker *time.Ticker) {
-	for {
-		t := <-ticker.C
-
-		message := createPlayersPositionMessage(w.game.players)
+		message := createPlayersPositionMessage(newBoard)
 		bytes, _ := json.Marshal(message)
 		err := w.ws.WriteMessage(1, bytes)
 
 		if err != nil {
 			log.Println("Returning from writer", err)
+			w.game.removePlayer(w.id)
 			return
 		}
-		fmt.Println("Tick at", t)
+	}
+}
+
+func (w worker) reader(inputChannel chan input) {
+	for {
+		_, p, err := w.ws.ReadMessage()
+
+		if err != nil {
+			log.Println("Returning from reader", err)
+			w.game.removePlayer(w.id)
+			return
+		}
+		fmt.Println(string(p))
 	}
 }

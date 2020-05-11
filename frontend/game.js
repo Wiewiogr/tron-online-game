@@ -4,7 +4,7 @@ var ctx = canvas.getContext('2d');
 let socket = new WebSocket('ws://127.0.0.1:8080/ws');
 console.log('Attempting Connection...');
 
-var players = []
+var board = []
 var playerId = 1;
 
 socket.onmessage = (messageEvent) => {
@@ -12,10 +12,9 @@ socket.onmessage = (messageEvent) => {
   if(message.type == "newPlayerId") {
     playerId = message.id
   } else if (message.type == "playersPosition") {
-    players = message.players
+    board = message.board
   }
 };
-
 
 document.addEventListener('keydown', keyDownHandler, false);
 function keyDownHandler(e) {
@@ -34,10 +33,10 @@ tick();
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  for (i = 0; i < players.length; i++) {
-    let player = players[i]
+  for (id in board) {
+    let position = board[id]
     ctx.beginPath();
-    ctx.arc(player.x, player.y, 5, 0, Math.PI * 2);
+    ctx.arc(position.x, position.y, 5, 0, Math.PI * 2);
     ctx.fillStyle = '#0095DD';
     ctx.fill();
     ctx.closePath();  

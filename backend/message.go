@@ -10,10 +10,10 @@ func createNewPlayerIDMessage(id int) newPlayerIDMessage {
 }
 
 type playersPositionsMessage struct {
-	EventType string   `json:"type"`
-	Players   []player `json:"players"`
+	EventType string                 `json:"type"`
+	Board     map[int]playerPosition `json:"board"`
 }
 
-func createPlayersPositionMessage(players []player) playersPositionsMessage {
-	return playersPositionsMessage{"playersPosition", players}
+func createPlayersPositionMessage(board map[int]playerPosition) playersPositionsMessage {
+	return playersPositionsMessage{"playersPosition", board}
 }
