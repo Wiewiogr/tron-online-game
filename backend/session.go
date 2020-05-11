@@ -8,16 +8,15 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type worker struct {
+type playerSession struct {
 	game *game
 	ws   *websocket.Conn
 	id   int
 }
 
-func (w *worker) initAndDispatch() {
-	log.Println("Client Connected")
+func (w *playerSession) initAndDispatch() {
 	updatesChannel := make(chan map[int]playerPosition)
-	inputChannel := make(chan input)
+	inputChannel := make(chan playerInput)
 	w.id = w.game.registerNewPlayer(updatesChannel, inputChannel)
 
 	message := createNewPlayerIDMessage(w.id)
@@ -28,11 +27,11 @@ func (w *worker) initAndDispatch() {
 		log.Println(err)
 	}
 
-	go w.writer(updatesChannel)
-	go w.reader(inputChannel)
+	go w.updatesSender(updatesChannel)
+	go w.inputListener(inputChannel)
 }
 
-func (w worker) writer(updatesChannel chan map[int]playerPosition) {
+func (w playerSession) updatesSender(updatesChannel chan map[int]playerPosition) {
 	for {
 		newBoard := <-updatesChannel
 
@@ -48,15 +47,32 @@ func (w worker) writer(updatesChannel chan map[int]playerPosition) {
 	}
 }
 
-func (w worker) reader(inputChannel chan input) {
+func (w playerSession) inputListener(inputChannel chan playerInput) {
 	for {
-		_, p, err := w.ws.ReadMessage()
+		_, bytes, err := w.ws.ReadMessage()
 
+		var message playerInputMessage
+		json.Unmarshal(bytes, &message)
+		input := toPlayerInput(message)
+		if input != nil {
+			inputChannel <- *input
+		}
 		if err != nil {
 			log.Println("Returning from reader", err)
 			w.game.removePlayer(w.id)
 			return
 		}
-		fmt.Println(string(p))
+		fmt.Println(string(bytes))
+	}
+}
+
+func toPlayerInput(msg playerInputMessage) *playerInput {
+	switch msg.Key {
+	case "Right":
+		return &playerInput{msg.ID, RIGHT}
+	case "Left":
+		return &playerInput{msg.ID, LEFT}
+	default:
+		return nil
 	}
 }

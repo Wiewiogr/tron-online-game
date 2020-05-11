@@ -27,7 +27,7 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 	}
 
-	var worker = worker{&mainGame, ws, -1}
+	var worker = playerSession{&mainGame, ws, -1}
 	worker.initAndDispatch()
 }
 

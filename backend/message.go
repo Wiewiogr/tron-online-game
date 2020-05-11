@@ -17,3 +17,8 @@ type playersPositionsMessage struct {
 func createPlayersPositionMessage(board map[int]playerPosition) playersPositionsMessage {
 	return playersPositionsMessage{"playersPosition", board}
 }
+
+type playerInputMessage struct {
+	ID  int    `json:"id"`
+	Key string `json:"key"`
+}
