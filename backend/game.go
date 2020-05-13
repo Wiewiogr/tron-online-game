@@ -32,6 +32,8 @@ type game struct {
 	playerIDCounter int
 	board           map[int]playerPosition
 	players         map[int]playerInfo
+	boardWidth      int
+	boardHeight     int
 }
 
 var directions = [4][2]int{
@@ -42,7 +44,7 @@ var directions = [4][2]int{
 }
 
 func NewGame() game {
-	return game{0, make(map[int]playerPosition), make(map[int]playerInfo)}
+	return game{0, make(map[int]playerPosition), make(map[int]playerInfo), 800, 600}
 }
 
 func (g *game) registerNewPlayer(updatesChannel chan map[int]playerPosition, inputChannel chan playerInput) int {
@@ -104,10 +106,20 @@ func (g *game) updatePosition() {
 	for id, info := range g.players {
 		position := g.board[id]
 		currentDirection := directions[info.direction]
-		position.X += currentDirection[0]
-		position.Y += currentDirection[1]
+		position.X = computeNewPosition(position.X, currentDirection[0], g.boardWidth)
+		position.Y = computeNewPosition(position.Y, currentDirection[1], g.boardHeight)
 		g.board[id] = position
 	}
+}
+
+func computeNewPosition(position, direction, limit int) int {
+	newPosition := position + direction
+	if newPosition < 0 {
+		newPosition = limit - 1
+	} else if newPosition >= limit {
+		newPosition = 0
+	}
+	return newPosition
 }
 
 func (g game) broadcastNewBoard() {
