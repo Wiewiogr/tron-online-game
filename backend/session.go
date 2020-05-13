@@ -15,7 +15,7 @@ type playerSession struct {
 }
 
 func (w *playerSession) initAndDispatch() {
-	updatesChannel := make(chan map[int]playerPosition)
+	updatesChannel := make(chan map[int]playerTrace)
 	inputChannel := make(chan playerInput)
 	w.id = w.game.registerNewPlayer(updatesChannel, inputChannel)
 
@@ -31,7 +31,7 @@ func (w *playerSession) initAndDispatch() {
 	go w.inputListener(inputChannel)
 }
 
-func (w playerSession) updatesSender(updatesChannel chan map[int]playerPosition) {
+func (w playerSession) updatesSender(updatesChannel chan map[int]playerTrace) {
 	for {
 		newBoard := <-updatesChannel
 

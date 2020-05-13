@@ -17,20 +17,25 @@ type playerInput struct {
 	key input
 }
 
-type playerPosition struct {
+type playerTrace struct {
+	Position coordinates   `json:"position"`
+	Traces   []coordinates `json:"traces"`
+}
+
+type coordinates struct {
 	X int `json:"x"`
 	Y int `json:"y"`
 }
 
 type playerInfo struct {
-	updatesChannel chan map[int]playerPosition
+	updatesChannel chan map[int]playerTrace
 	inputChannel   chan playerInput
 	direction      int
 }
 
 type game struct {
 	playerIDCounter int
-	board           map[int]playerPosition
+	board           map[int]playerTrace
 	players         map[int]playerInfo
 	boardWidth      int
 	boardHeight     int
@@ -44,13 +49,16 @@ var directions = [4][2]int{
 }
 
 func NewGame() game {
-	return game{0, make(map[int]playerPosition), make(map[int]playerInfo), 800, 600}
+	return game{0, make(map[int]playerTrace), make(map[int]playerInfo), 800, 600}
 }
 
-func (g *game) registerNewPlayer(updatesChannel chan map[int]playerPosition, inputChannel chan playerInput) int {
+func (g *game) registerNewPlayer(updatesChannel chan map[int]playerTrace, inputChannel chan playerInput) int {
 	g.playerIDCounter++
 	id := g.playerIDCounter
-	g.board[id] = playerPosition{rand.Int() % 200, rand.Int() % 200}
+	startingX := rand.Int() % g.boardWidth
+	startingY := rand.Int() % g.boardHeight
+
+	g.board[id] = playerTrace{coordinates{startingX, startingY}, []coordinates{coordinates{startingX, startingY}}}
 	g.players[id] = playerInfo{updatesChannel, inputChannel, 0}
 	return id
 }
@@ -100,14 +108,19 @@ func (g *game) handlePlayerInput(playerInput playerInput) {
 		}
 	}
 	g.players[playerInput.id] = playerInfo
+
+	/// adding old position as trace
+	playerTrace := g.board[playerInput.id]
+	playerTrace.Traces = append(playerTrace.Traces, playerTrace.Position)
+	g.board[playerInput.id] = playerTrace
 }
 
 func (g *game) updatePosition() {
 	for id, info := range g.players {
 		position := g.board[id]
 		currentDirection := directions[info.direction]
-		position.X = computeNewPosition(position.X, currentDirection[0], g.boardWidth)
-		position.Y = computeNewPosition(position.Y, currentDirection[1], g.boardHeight)
+		position.Position.X = computeNewPosition(position.Position.X, currentDirection[0], g.boardWidth)
+		position.Position.Y = computeNewPosition(position.Position.Y, currentDirection[1], g.boardHeight)
 		g.board[id] = position
 	}
 }
