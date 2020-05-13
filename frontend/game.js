@@ -7,6 +7,13 @@ console.log('Attempting Connection...');
 var board = []
 var playerId = 1;
 
+let colors = [
+  '#e74c3c',
+  '#0095DD',
+  `#f4d03f`,
+  `#27ae60`
+]
+
 socket.onmessage = (messageEvent) => {
   message = JSON.parse(messageEvent.data)
   if(message.type == "newPlayerId") {
@@ -37,7 +44,7 @@ function draw() {
     let position = board[id]
     ctx.beginPath();
     ctx.arc(position.x, position.y, 5, 0, Math.PI * 2);
-    ctx.fillStyle = '#0095DD';
+    ctx.fillStyle = colors[id%4];
     ctx.fill();
     ctx.closePath();  
   } 

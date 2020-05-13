@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 )
@@ -75,7 +74,6 @@ func (g *game) tick() {
 	g.readInput()
 	g.updatePosition()
 	g.broadcastNewBoard()
-	// schedule next tick
 }
 
 func (g game) readInput() {
@@ -86,7 +84,6 @@ func (g game) readInput() {
 		default:
 		}
 	}
-	fmt.Println(g.players)
 }
 
 func (g *game) handlePlayerInput(playerInput playerInput) {
